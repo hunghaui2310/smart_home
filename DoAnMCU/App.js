@@ -13,7 +13,7 @@ import {
   ScrollView,
   View,
   Text,
-  StatusBar, Image
+  StatusBar, Image, TouchableOpacity, ToastAndroid
 } from 'react-native';
 
 import {
@@ -34,7 +34,7 @@ const DATA = {
   fan: 0
 }
 
-const URL = 'http://192.168.1.100';
+const URL = 'http://192.168.1.123';
 
 class App extends Component {
 
@@ -42,23 +42,26 @@ class App extends Component {
     super(props);
     this.state = {
       status: false,
-      colorDoor: false,
-      colorWarning: false,
-      colorLight: false,
-      colorFan: false
+      colorDoor: '#AAA',
+      colorWarning: '#AAA',
+      colorLight: '#AAA',
+      colorFan: '#AAA',
+      isOnDoor: false,
+      isOnWarning: false,
+      isOnLight: false,
+      isOnFan: false
     }
   }
 
   componentDidMount() {
-    this.loadData();
+    setInterval(() => {
+      this.loadData();
+    }, 1000);
   }
 
   loadData() {
     fetch(URL + '/current-status', {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      }
     })
       .then(res => {
         if (res.status == 200) {
@@ -69,33 +72,37 @@ class App extends Component {
         return res.text();
       })
       .then((resJSON) => {
-        console.log(resJSON);
         var data = JSON.parse(resJSON);
         if (data.door == 1) {
+          // console.log('da cap nhat door', data.door);
           this.setState({
-            colorDoor: true
+            colorDoor: '#1aa3ff',
+            isOnDoor: true
           })
         }
         if (data.warning == 1) {
           this.setState({
-            colorWarning: true
+            colorWarning: '#1aa3ff',
+            isOnWarning: true
           })
         }
         if (data.light == 1) {
           this.setState({
-            colorLight: true
+            colorLight: '#1aa3ff',
+            isOnLight: true
           })
         }
         if (data.fan == 1) {
           this.setState({
-            colorFan: true
+            colorFan: '#1aa3ff',
+            isOnFan: true
           })
         }
       })
       .catch((error) => {
-        console.log('Đã xảy ra lỗi' + error);
+        ToastAndroid.show('Đã xảy ra lỗi ' + error, 200);
         this.setState({
-          status: false
+          status: false,
         })
       })
   }
@@ -107,7 +114,7 @@ class App extends Component {
           <Header>
             <Left>
               <Button transparent>
-                <Icon name='home' color="white" />
+                <Icon name='home' color="white" size={20} />
               </Button>
             </Left>
             <Body>
@@ -124,22 +131,22 @@ class App extends Component {
               </View>
               <View style={styles.body}>
                 <View style={styles.sectionContainer}>
-                  <Item nameIcon="lightbulb" nameComponent="light"
-                    colorLight={this.state.colorLight ? '#1aa3ff' : 'black'} />
+                  <Item nameIcon="lightbulb" nameComponent="light" isOn={this.state.isOnLight}
+                    colorLight={this.state.colorLight}/>
                 </View>
                 <View style={styles.sectionContainer}>
-                  <Item nameIcon="door-open" nameComponent="door"
-                    colorLight={this.state.colorDoor ? '#1aa3ff' : 'black'} />
+                  <Item nameIcon="door-open" nameComponent="door" isOn={this.state.isOnDoor}
+                    colorLight={this.state.colorDoor} />
                 </View>
               </View>
               <View style={styles.body}>
                 <View style={styles.sectionContainer}>
-                  <Item nameIcon="fire-extinguisher" nameComponent="warning"
-                    colorLight={this.state.colorWarning ? '#1aa3ff' : 'black'} />
+                  <Item nameIcon="fire-extinguisher" nameComponent="warning" isOn={this.state.isOnWarning}
+                    colorLight={this.state.colorWarning} />
                 </View>
                 <View style={styles.sectionContainer}>
-                  <Item nameIcon="radiation" nameComponent="fan"
-                    colorLight={this.state.colorFan ? '#1aa3ff' : 'black'} />
+                  <Item nameIcon="radiation" nameComponent="fan" isOn={this.state.isOnFan}
+                    colorLight={this.state.colorFan} />
                 </View>
               </View>
             </View>
@@ -176,11 +183,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.black,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
+  btnConnect: {
+    padding: 8,
+    backgroundColor: "#0000cc"
   },
   highlight: {
     fontWeight: '700',

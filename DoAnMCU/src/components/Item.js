@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import ToggleSwitch from 'toggle-switch-react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, ToastAndroid } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 const DATA = {
@@ -11,7 +10,7 @@ const DATA = {
     fan: 0
 }
 
-const URL = 'http://192.168.1.100'
+const URL = 'http://192.168.1.123'
 
 class Item extends Component {
 
@@ -19,63 +18,53 @@ class Item extends Component {
         super(props);
         this.state = {
             colorLight: this.props.colorLight,
-            demDen: 0,
+            isOn: this.props.isOn,
             nameComponent: this.props.nameComponent
         }
     }
 
-    loadData() {
-        fetch(URL + '/current-status', {
-            method: 'GET'
-        })
-            .then((res) => res.json())
-            .then((resJSON) => {
-                console.log(resJSON);
-            })
-            .catch((error) => {
-                console.log('Đã xảy ra lỗi' + error);
-            })
-    }
-
     // ham thay doi trang thai thiet bi
     update(componentName) {
-        var dem = this.state.demDen;
-        dem += 1;
         // neu dem chan thi tat thiet bi
-        if (dem % 2 == 0) {
+        if (this.state.isOn) {
             this.setState({
-                colorLight: this.props.colorLight,
-                demDen: dem
+                colorLight: '#AAA',
+                isOn: false
             })
-            fetch(URL + '/update-component?component=' + componentName + '&status=0', {
+            fetch(URL + '/update-component?component=' + componentName + '&state=0', {
                 method: 'GET'
             })
-                .then((res) => res.json())
+                .then((res) => res.text())
                 .then((resJSON) => {
                     console.log(resJSON);
+                    if (resJSON == 'Success') {
+                        ToastAndroid.show('Đã tắt thiết bị', 20);
+                    } else {
+                        ToastAndroid.show('Thay đổi trạng thái thất bại', 20);
+                    }
                 })
                 .catch((error) => {
-                    console.log('Đã xảy ra lỗi' + error);
+                    ToastAndroid.show('Đã xảy ra lỗi ' + error , 200);
                 })
-            
-        }
-        // neu dem le thi tat thiet bi 
-        else {
+        } else {
             this.setState({
                 colorLight: '#1aa3ff',
-                demDen: dem
+                isOn: true
             })
-            fetch(URL + '/update-component?component=' + componentName + '&status=1', {
+            fetch(URL + '/update-component?component=' + componentName + '&state=1', {
                 method: 'GET'
             })
-                .then((res) => res.json())
+                .then((res) => res.text())
                 .then((resJSON) => {
-                    console.log(resJSON);
+                    if (resJSON == 'Success') {
+                        ToastAndroid.show('Đã bật thiết bị', 20);
+                    } else {
+                        ToastAndroid.show('Thay đổi trạng thái thất bại', 20);
+                    }
                 })
                 .catch((error) => {
-                    console.log('Đã xảy ra lỗi' + error);
+                    ToastAndroid.show('Đã xảy ra lỗi ' + error , 200);
                 })
-        
         }
     }
 
@@ -85,14 +74,6 @@ class Item extends Component {
                 <TouchableOpacity onPress={() => this.update(this.state.nameComponent)}>
                     <Icon name={this.props.nameIcon} size={100} color={this.state.colorLight} style={{ paddingBottom: 20 }} />
                 </TouchableOpacity>
-                {/* <ToggleSwitch
-                    isOn={this.state.isOn}
-                    onColor="#1aa3ff"
-                    offColor="black"
-                    labelStyle={{ color: "black", fontWeight: "900" }}
-                    size="large"
-                    onToggle={() => this.onAlarm(this.state.isOn)}
-                /> */}
             </View>
         )
     }
