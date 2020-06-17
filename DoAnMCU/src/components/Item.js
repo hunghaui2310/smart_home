@@ -3,39 +3,86 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import ToggleSwitch from 'toggle-switch-react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
+const DATA = {
+    status: 0,
+    door: 0,
+    warning: 0,
+    light: 0,
+    fan: 0
+}
+
+const URL = 'http://192.168.1.100'
+
 class Item extends Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            isOn: false,
-            colorLight: 'black',
-            demDen: 0
+            colorLight: this.props.colorLight,
+            demDen: 0,
+            nameComponent: this.props.nameComponent
         }
     }
 
-    onAlarm(isOn) {
+    loadData() {
+        fetch(URL + '/current-status', {
+            method: 'GET'
+        })
+            .then((res) => res.json())
+            .then((resJSON) => {
+                console.log(resJSON);
+            })
+            .catch((error) => {
+                console.log('Đã xảy ra lỗi' + error);
+            })
+    }
+
+    // ham thay doi trang thai thiet bi
+    update(componentName) {
         var dem = this.state.demDen;
         dem += 1;
+        // neu dem chan thi tat thiet bi
         if (dem % 2 == 0) {
             this.setState({
-                isOn: !isOn,
-                colorLight: 'black',
+                colorLight: this.props.colorLight,
                 demDen: dem
             })
-        } else {
+            fetch(URL + '/update-component?component=' + componentName + '&status=0', {
+                method: 'GET'
+            })
+                .then((res) => res.json())
+                .then((resJSON) => {
+                    console.log(resJSON);
+                })
+                .catch((error) => {
+                    console.log('Đã xảy ra lỗi' + error);
+                })
+            
+        }
+        // neu dem le thi tat thiet bi 
+        else {
             this.setState({
-                isOn: !isOn,
                 colorLight: '#1aa3ff',
                 demDen: dem
             })
+            fetch(URL + '/update-component?component=' + componentName + '&status=1', {
+                method: 'GET'
+            })
+                .then((res) => res.json())
+                .then((resJSON) => {
+                    console.log(resJSON);
+                })
+                .catch((error) => {
+                    console.log('Đã xảy ra lỗi' + error);
+                })
+        
         }
     }
 
     render() {
         return (
             <View style={styles.container}>
-                <TouchableOpacity onPress={() => this.onAlarm(this.state.isOn)}>
+                <TouchableOpacity onPress={() => this.update(this.state.nameComponent)}>
                     <Icon name={this.props.nameIcon} size={100} color={this.state.colorLight} style={{ paddingBottom: 20 }} />
                 </TouchableOpacity>
                 {/* <ToggleSwitch
