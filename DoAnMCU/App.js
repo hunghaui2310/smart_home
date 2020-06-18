@@ -8,33 +8,24 @@
 
 import React, { Component } from 'react';
 import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar, Image, TouchableOpacity, ToastAndroid
+  RefreshControl, StyleSheet, ScrollView, ProgressBarAndroid,
+  View, Text, Image, TouchableOpacity, ToastAndroid, Vibration
 } from 'react-native';
 
 import {
-  LearnMoreLinks,
   Colors,
-  DebugInstructions,
-  ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
-import Item from './src/components/Item';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body } from 'native-base';
+import { Container, Header, Title, Content, Button, Left, Right, Body } from 'native-base';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import SoundPlayer from 'react-native-sound-player';
 
-const DATA = {
-  status: 0,
-  door: 0,
-  warning: 0,
-  light: 0,
-  fan: 0
-}
-
-const URL = 'http://192.168.1.123';
+const URL = 'http://192.168.1.164';
+const ONE_SECOND_IN_MS = 1000;
+const PATTERN = [
+  1 * ONE_SECOND_IN_MS,
+  2 * ONE_SECOND_IN_MS,
+  3 * ONE_SECOND_IN_MS
+];
 
 class App extends Component {
 
@@ -42,123 +33,168 @@ class App extends Component {
     super(props);
     this.state = {
       status: false,
-      colorDoor: '#AAA',
-      colorWarning: '#AAA',
-      colorLight: '#AAA',
-      colorFan: '#AAA',
       isOnDoor: false,
       isOnWarning: false,
       isOnLight: false,
-      isOnFan: false
+      isOnFan: false,
+      refreshing: false,
+      loadingBar: false,
+      isSelected: false
     }
   }
 
   componentDidMount() {
     setInterval(() => {
       this.loadData();
-    }, 1000);
+    }, 3000);
   }
 
-  loadData() {
+  async loadData() {
+    console.log('Dang cap nhat...');
     fetch(URL + '/current-status', {
       method: 'GET',
     })
-      .then(res => {
-        if (res.status == 200) {
-          this.setState({
-            status: 1
-          })
-        }
-        return res.text();
-      })
+      .then(res => res.text())
       .then((resJSON) => {
+        console.log(resJSON);
         var data = JSON.parse(resJSON);
-        if (data.door == 1) {
-          // console.log('da cap nhat door', data.door);
-          this.setState({
-            colorDoor: '#1aa3ff',
-            isOnDoor: true
-          })
-        }
+        this.setState({
+          status: true,
+          isOnDoor: data.door,
+          isOnLight: data.light,
+          isOnWarning: data.warning,
+          isOnFan: data.fan
+        })
         if (data.warning == 1) {
-          this.setState({
-            colorWarning: '#1aa3ff',
-            isOnWarning: true
-          })
+          Vibration.vibrate(PATTERN, true);
+          SoundPlayer.playSoundFile('chuong', 'mp3');
+        } else {
+          Vibration.cancel();
+          SoundPlayer.stop();
         }
-        if (data.light == 1) {
-          this.setState({
-            colorLight: '#1aa3ff',
-            isOnLight: true
-          })
+      })
+      .catch((error) => {
+        console.log('Lỗi ' + error);
+      })
+  }
+
+  stopVibration() {
+    if (this.state.isOnWarning) {
+      Vibration.cancel();
+      SoundPlayer.stop();
+    }
+  }
+
+  _onRefresh = () => {
+    this.setState({ refreshing: true });
+    this.loadData().then(this.setState({ refreshing: false }));
+  }
+
+  update(componentName, isOn) {
+    this.setState({
+      loadingBar: true
+    })
+    var stateDevice;
+    if (isOn) {
+      stateDevice = 0;
+    } else {
+      stateDevice = 1;
+    }
+    fetch(URL + '/update-component?component=' + componentName + '&state=' + stateDevice, {
+      method: 'GET'
+    })
+      .then((res) => res.text())
+      .then((resJSON) => {
+        if (resJSON == 'Success') {
+          if (componentName == 'light') {
+            this.setState({ isOnLight: !isOn });
+          } else if (componentName == 'door') {
+            this.setState({ isOnDoor: !isOn });
+          } else if (componentName == 'warning') {
+            this.setState({ isOnWarning: !isOn });
+          } else {
+            this.setState({ isOnFan: !isOn });
+          }
+          if (isOn) {
+            ToastAndroid.show('Đã tắt thiết bị', 20);
+          } else {
+            ToastAndroid.show('Đã bật thiết bị', 20);
+          }
+        } else {
+          ToastAndroid.show('Thay đổi trạng thái thất bại', 20);
         }
-        if (data.fan == 1) {
-          this.setState({
-            colorFan: '#1aa3ff',
-            isOnFan: true
-          })
-        }
+        this.setState({
+          loadingBar: false
+        })
       })
       .catch((error) => {
         ToastAndroid.show('Đã xảy ra lỗi ' + error, 200);
         this.setState({
-          status: false,
+          status: false
         })
       })
   }
 
   render() {
+    const refreshing = this.state.refreshing;
     return (
       <>
-        <Container>
-          <Header>
-            <Left>
-              <Button transparent>
-                <Icon name='home' color="white" size={20} />
-              </Button>
-            </Left>
-            <Body>
-              <Title>Nhà thông minh</Title>
-            </Body>
-            <Right>
-              <Text style={{ color: "white" }}>{this.state.status ? 'Đã kết nối' : 'Chưa kết nối'}</Text>
-            </Right>
-          </Header>
-          <Content>
-            <View>
-              <View>
-                <Image source={require('./src/image/nha.jpg')} style={styles.engine} />
+        <ScrollView style={styles.scrollView} refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={this._onRefresh} />
+        }>
+          <Container>
+            <Header>
+              <Left>
+                <Button transparent>
+                  <Icon name='home' color="white" size={20} />
+                </Button>
+              </Left>
+              <Body>
+                <Title>Nhà thông minh</Title>
+              </Body>
+              <Right>
+                <Text style={{ color: "white" }}>{this.state.status ? 'Đã kết nối' : 'Chưa kết nối'}</Text>
+              </Right>
+            </Header>
+            <Content>
+              <View style={{ flex: 1, justifyContent: 'space-between' }}>
+                <View style={{ flex: 1 }}>
+                  <Image source={require('./src/image/nha.jpg')} style={styles.engine} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.body}>
+                    <View style={styles.sectionContainer}>
+                      <TouchableOpacity onPress={() => this.update('light', this.state.isOnLight)}>
+                        <Icon name="lightbulb" size={100} color={this.state.isOnLight ? '#1aa3ff' : '#AAA'} />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.sectionContainer}>
+                      <TouchableOpacity onPress={() => this.update('door', this.state.isOnDoor)}>
+                        <Icon name="door-open" size={100} color={this.state.isOnDoor ? '#1aa3ff' : '#AAA'} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={styles.body}>
+                    <View style={styles.sectionContainer}>
+                      <TouchableOpacity onPress={() => this.stopVibration()} disabled={!this.state.isOnWarning}>
+                        <Icon name="fire-extinguisher" size={100} color={this.state.isOnWarning ? '#1aa3ff' : '#AAA'} />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.sectionContainer}>
+                      <TouchableOpacity onPress={() => this.update('fan', this.state.isOnFan)}>
+                        <Icon name="radiation" size={100} color={this.state.isOnFan ? '#1aa3ff' : '#AAA'} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
               </View>
-              <View style={styles.body}>
-                <View style={styles.sectionContainer}>
-                  <Item nameIcon="lightbulb" nameComponent="light" isOn={this.state.isOnLight}
-                    colorLight={this.state.colorLight}/>
-                </View>
-                <View style={styles.sectionContainer}>
-                  <Item nameIcon="door-open" nameComponent="door" isOn={this.state.isOnDoor}
-                    colorLight={this.state.colorDoor} />
-                </View>
-              </View>
-              <View style={styles.body}>
-                <View style={styles.sectionContainer}>
-                  <Item nameIcon="fire-extinguisher" nameComponent="warning" isOn={this.state.isOnWarning}
-                    colorLight={this.state.colorWarning} />
-                </View>
-                <View style={styles.sectionContainer}>
-                  <Item nameIcon="radiation" nameComponent="fan" isOn={this.state.isOnFan}
-                    colorLight={this.state.colorFan} />
-                </View>
-              </View>
-            </View>
-          </Content>
-          <Footer>
-            <FooterTab>
-              <Button full>
-                <Text style={{ color: "white" }}>-- Do An Tot Nghiep --</Text>
-              </Button>
-            </FooterTab>
-          </Footer>
-        </Container>
+            </Content>
+          </Container>
+        </ScrollView>
+        {this.state.loadingBar ? <ProgressBarAndroid styleAttr="Horizontal" color="#2196F3" /> : <View></View>}
+        <View style={styles.footer}>
+          <Text style={{ color: 'white' }}>---Do An Tot Nghiep---</Text>
+        </View>
       </>
     );
   }
@@ -176,27 +212,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
   },
   sectionContainer: {
-    padding: 20
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  btnConnect: {
-    padding: 8,
-    backgroundColor: "#0000cc"
-  },
-  highlight: {
-    fontWeight: '700',
+    padding: 40,
+    justifyContent: "center",
+    alignItems: "center"
   },
   footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    backgroundColor: "#0066ff",
+    padding: 20
   },
 });
 
