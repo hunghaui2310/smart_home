@@ -43,11 +43,15 @@ class App extends Component {
     }
   }
 
-  componentDidMount() {
-    setInterval(() => {
-      this.loadData();
-    }, 3000);
-  }
+  // componentDidMount() {
+  //   setInterval(() => {
+  //     this.loadData();
+  //   }, 3000);
+  // }
+
+  // componentWillUnmount() {
+  //   this.loadData();
+  // }
 
   async loadData() {
     console.log('Dang cap nhat...');
@@ -128,9 +132,9 @@ class App extends Component {
         })
       })
       .catch((error) => {
-        ToastAndroid.show('Đã xảy ra lỗi ' + error, 200);
+        ToastAndroid.show('' + error, 200);
         this.setState({
-          status: false
+          loadingBar: false
         })
       })
   }
@@ -157,7 +161,7 @@ class App extends Component {
               </Right>
             </Header>
             <Content>
-              <View style={{ flex: 1, justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, justifyContent: 'center', flexDirection: 'column' }}>
                 <View style={{ flex: 1 }}>
                   <Image source={require('./src/image/nha.jpg')} style={styles.engine} />
                 </View>
@@ -220,7 +224,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     backgroundColor: "#0066ff",
-    padding: 20
+    padding: 15
   },
 });
 
