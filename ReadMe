@@ -1,0 +1,39 @@
+// Cách chạy app:
+B1: Mở cửa sổ terminal
+B2: cd đến thư mục DoAnMCU
+B3: Chạy lệnh: npm start.
+B4: Mở thêm một cửa sổ terminal và cd đến thư mục DoAnMCU
+B5: Chạy lệnh: npm run android
+
+// Cách sử dụng App:
+	Sau khi mở App lên, nhập địa chỉ IP(địa chỉ IP đã nhập trước đó trên web) để kết nối đến server NodeMCU. Nếu kết nối thàn công, App sẽ tự động thay đổi trạng thái từ "Chưa kết nối" thành "Đã kết nối"
+	Mặc định, app sẽ tự động load lại trạng thái thiết bị sau cứ 2s để có thể load lại trạng thái thiết bị.
+	
+// Giải thích cách hoạt động của App.
+
+	App được code bằng Framework React Native, đây là một Framework được xây dựng dựa trên JavaScript, và được phát triển bởi Facebook.(Có thể Google để đọc thêm thông tin về Framework này).
+	App hoạt động dựa trên giao tiếp qua API(Application Programming Interface), nghĩa là: phía server(Node MCU) sẽ trả ra một chuỗi data, có dạng JSON(JavaScript Object Notation). Sau đó app sẽ nhận được API này và show ra trạng thái thiết bị: 0 tắt, 1 bật.
+	Người dùng có thể thực hiện thay đổi trạng thái thiết bị thông qua app. Do vậy, app cần phải gửi dữ liệu thông qua API về phía server. Server sau khi nhận được API sẽ thực hiện thay đổi trạng thái thiết bị dựa theo tên thiết bị và trạng thái cần cập nhật.
+	Sau khi server cập nhật trạng thái thiết bị xong, server sẽ trả ra một thông báo xem có cập nhật thiết bị thành công hay không. Nếu thành công, App sẽ trả ra thông báo "Đã thay đỏi trạng thái thiết bị". Ngược lại sẽ trả ra lỗi tương ứng.
+
+// API:
+	API + '/current-status' (GET)
+	{
+		light: 0/1,
+		door: 0/1,
+		warning: 0/1,
+		fan: 0/1
+	}
+(với:	light, door, warning, fan: là key của các thiết bị tương ứng: đèn, cửa, báo cháy, quạt.
+	0/1 là trạng thái thiết bị, nếu là 0, thiết bị đang tắt và ngược lại.)
+	
+	API + '/update-component?component=' + componentName + '&state=' + state (GET)
+	{
+		Success
+	}
+(với:	componentName: là tên thiết bị
+	state: trạng thái thiết bị
+	Success: thông báo đã cập nhật trạng thái thiết bị thành công.
+	VD: muốn cập nhật trạng thái đèn từ tắt thành bật:
+	API+ '/update-component?component=light&state=1')
+	
