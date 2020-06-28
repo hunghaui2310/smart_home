@@ -71,13 +71,12 @@ class App extends Component {
 
   async componentDidMount() {
     if (this.state.valueIP == null) {
-      this.openDialog();
+      this.openDialog().then(() => {
+        setInterval(() => {
+          this.loadData();
+        }, 1000);
+      });
     }
-
-
-    setInterval(() => {
-      this.loadData();
-    }, 2000);
 
   }
 
@@ -121,8 +120,34 @@ class App extends Component {
 
   stopVibration() {
     if (this.state.isOnWarning) {
-      Vibration.cancel();
-      SoundPlayer.stop();
+      fetch('http://' + this.state.valueIP.trim() + '/update-component?component=warning&state=0', {
+        method: 'GET'
+      })
+        .then((res) => res.text())
+        .then((resJSON) => {
+          if (resJSON == 'Success') {
+            this.setState({ isOnWarning: false })
+            if (!this.state.isOnWarning) {
+              Vibration.cancel();
+              SoundPlayer.stop();
+              ToastAndroid.show('Đã tắt thiết bị', 20);
+            } else {
+              ToastAndroid.show('Đã bật thiết bị', 20);
+            }
+          } else {
+            ToastAndroid.show('Thay đổi trạng thái thất bại', 20);
+          }
+          this.setState({
+            loadingBar: false
+          })
+        })
+        .catch((error) => {
+          ToastAndroid.show('' + error, 200);
+          this.setState({
+            loadingBar: false,
+            status: false
+          })
+        })
     }
   }
 
@@ -247,7 +272,7 @@ class App extends Component {
                     <View style={styles.sectionContainer}>
                       <TouchableOpacity onPress={() => this.stopVibration()} disabled={!this.state.isOnWarning}>
                         <Icon name="fire-extinguisher" size={100} color={this.state.isOnWarning ? '#1aa3ff' : '#AAA'} />
-                        <Text style={styles.devices}>Báo cháy: {this.state.isOnWarning ? 'Bật' : 'Tắt'}</Text>
+                        <Text style={styles.devices}>Báo cháy: {this.state.isOnWarning ? 'Cảnh báo' : 'Tắt'}</Text>
                       </TouchableOpacity>
                     </View>
                     <View style={styles.sectionContainer}>
