@@ -74,11 +74,11 @@ class App extends Component {
       this.openDialog();
     }
 
-    if (!this.dialogVisible) {
-      setInterval(() => {
-        this.loadData();
-      }, 2000);
-    }
+
+    setInterval(() => {
+      this.loadData();
+    }, 2000);
+
   }
 
   // componentWillUnmount() {
@@ -86,32 +86,37 @@ class App extends Component {
   // }
 
   async loadData() {
-    var url = 'http://' + this.state.valueIP.trim() + '/current-status';
-    fetch(url, {
-      method: 'GET',
-    })
-      .then(res => res.text())
-      .then((resJSON) => {
-        console.log(resJSON);
-        var data = JSON.parse(resJSON);
-        this.setState({
-          status: true,
-          isOnDoor: data.door,
-          isOnLight: data.light,
-          isOnWarning: data.warning,
-          isOnFan: data.fan
+    if (this.state.valueIP != null) {
+      var url = 'http://' + this.state.valueIP.trim() + '/current-status';
+      fetch(url, {
+        method: 'GET',
+      })
+        .then(res => res.text())
+        .then((resJSON) => {
+          console.log(resJSON);
+          var data = JSON.parse(resJSON);
+          this.setState({
+            status: true,
+            isOnDoor: data.door,
+            isOnLight: data.light,
+            isOnWarning: data.warning,
+            isOnFan: data.fan
+          })
+          if (data.warning == 1) {
+            Vibration.vibrate(PATTERN, true);
+            SoundPlayer.playSoundFile('chuong', 'mp3');
+          } else {
+            Vibration.cancel();
+            SoundPlayer.stop();
+          }
         })
-        if (data.warning == 1) {
-          Vibration.vibrate(PATTERN, true);
-          SoundPlayer.playSoundFile('chuong', 'mp3');
-        } else {
-          Vibration.cancel();
-          SoundPlayer.stop();
-        }
-      })
-      .catch((error) => {
-        console.log('Lỗi ' + error);
-      })
+        .catch((error) => {
+          console.log('Lỗi ' + error);
+          this.setState({
+            status: false
+          })
+        })
+    }
   }
 
   stopVibration() {
@@ -166,7 +171,8 @@ class App extends Component {
       .catch((error) => {
         ToastAndroid.show('' + error, 200);
         this.setState({
-          loadingBar: false
+          loadingBar: false,
+          status: false
         })
       })
   }
