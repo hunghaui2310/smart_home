@@ -13,10 +13,7 @@ import {
   View, Text, Image, TouchableOpacity, ToastAndroid, Vibration, TextInput
 } from 'react-native';
 
-import {
-  Colors,
-} from 'react-native/Libraries/NewAppScreen';
-import { Container, Header, Button, Title, Left, Right, Body } from 'native-base';
+import { Header, Button, Title, Left, Right, Body } from 'native-base';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import SoundPlayer from 'react-native-sound-player';
 import Dialog from "react-native-dialog";
@@ -38,6 +35,10 @@ class App extends Component {
       isOnWarning: false,
       isOnLight: false,
       isOnFan: false,
+      temperature: null,
+      humidity: null,
+      isMontion: false,
+      isLight: false,
       refreshing: false,
       loadingBar: false,
       isSelected: false,
@@ -45,10 +46,6 @@ class App extends Component {
       valueIP: null
     }
   }
-
-  // UNSAFE_componentWillMount() {
-  //   this.loadData();
-  // }
 
   async openDialog() {
     this.setState({ dialogVisible: true });
@@ -80,10 +77,6 @@ class App extends Component {
 
   }
 
-  // componentWillUnmount() {
-  //   this.loadData();
-  // }
-
   async loadData() {
     if (this.state.valueIP != null) {
       var url = 'http://' + this.state.valueIP.trim() + '/current-status';
@@ -99,7 +92,11 @@ class App extends Component {
             isOnDoor: data.door,
             isOnLight: data.light,
             isOnWarning: data.warning,
-            isOnFan: data.fan
+            isOnFan: data.fan,
+            temperature: data.temp,
+            humidity: data.humid,
+            isLight: data.day,
+            isMontion: data.motion
           })
           if (data.warning == 1) {
             Vibration.vibrate(PATTERN, true);
@@ -249,8 +246,19 @@ class App extends Component {
                 <Dialog.Button label="OK" onPress={this.handleCancel} />
               </Dialog.Container>
               <View style={{ flex: 1, justifyContent: 'center', flexDirection: 'column' }}>
-                <View style={{ width: '100%', height: windowHeight / 3 }}>
-                  <Image source={require('./src/image/nha.jpg')} style={styles.engine} />
+                <View style={{ width: '100%', height: windowHeight / 4 }}>
+                  {this.state.isLight ? <Image source={require('./src/image/nha.jpg')} style={styles.engine} /> : 
+                  <Image source={require('./src/image/anh_den.jpg')} style={styles.engine} />}
+                </View>
+                <View style={styles.tempurate}>
+                  <View>
+                    <Text style={styles.text20}>Nhiệt độ: {this.state.temperature} độ</Text>
+                    <Text style={styles.text20}>Độ ẩm: {this.state.humidity} %</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.text20}>{this.state.isLight ? 'Ban đêm' : 'Ban ngày'}</Text>
+                    <Text style={styles.text20}>Chuyển động: {this.state.isMontion ? 'Không' : 'Có'}</Text>
+                  </View>
                 </View>
                 <View>
                   <View style={styles.body}>
@@ -304,7 +312,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   engine: {
-    opacity: .8,
+    opacity: .7,
     width: undefined,
     height: undefined,
     resizeMode: 'cover',
@@ -313,6 +321,11 @@ const styles = StyleSheet.create({
   body: {
     flexDirection: "row",
     justifyContent: "space-around",
+  },
+  tempurate: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingTop: 20
   },
   devices: {
     fontSize: 17,
@@ -336,6 +349,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#0066ff",
     padding: 15
   },
+  text20: {
+    fontSize: 20
+  }
 });
 
 export default App;
