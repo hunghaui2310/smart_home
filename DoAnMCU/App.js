@@ -250,7 +250,7 @@ class App extends Component {
                   {this.state.isLight ? <Image source={require('./src/image/nha.jpg')} style={styles.engine} /> : 
                   <Image source={require('./src/image/anh_den.jpg')} style={styles.engine} />}
                 </View>
-                <View style={styles.tempurate}>
+                {/* <View style={styles.tempurate}>
                   <View>
                     <Text style={styles.text20}>Nhiệt độ: {this.state.temperature} độ</Text>
                     <Text style={styles.text20}>Độ ẩm: {this.state.humidity} %</Text>
@@ -259,7 +259,7 @@ class App extends Component {
                     <Text style={styles.text20}>{this.state.isLight ? 'Ban đêm' : 'Ban ngày'}</Text>
                     <Text style={styles.text20}>Chuyển động: {this.state.isMontion ? 'Không' : 'Có'}</Text>
                   </View>
-                </View>
+                </View> */}
                 <View>
                   <View style={styles.body}>
                     <View style={styles.sectionContainer}>
@@ -268,7 +268,7 @@ class App extends Component {
                         <Text style={styles.devices}>Đèn: {this.state.isOnLight ? 'Bật' : 'Tắt'}</Text>
                       </TouchableOpacity>
                     </View>
-                    <View style={styles.sectionContainer}>
+                    {/* <View style={styles.sectionContainer}>
                       <TouchableOpacity onPress={() => this.update('door', this.state.isOnDoor)}>
                         {this.state.isOnDoor ? <Icon name="door-open" size={100} color='#1aa3ff' /> :
                           <Icon name="door-closed" size={100} color='#AAA' />}
@@ -288,7 +288,7 @@ class App extends Component {
                         <Icon name="radiation" size={100} color={this.state.isOnFan ? '#1aa3ff' : '#AAA'} />
                         <Text style={styles.devices}>Quạt: {this.state.isOnFan ? 'Bật' : 'Tắt'}</Text>
                       </TouchableOpacity>
-                    </View>
+                    </View> */}
                   </View>
                 </View>
               </View>
